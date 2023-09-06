@@ -1,4 +1,5 @@
 {
+  "name": "better-fetch",
   "private": true,
   "scripts": {
     "build": "nuxt build",
