@@ -8,6 +8,7 @@ export type $FetchRaw = (
 ) => Promise<FetchResponse>;
 
 interface FetchOptions extends RequestInit {
+  timeout?: number;
   onRequest?(context: FetchContext): Promise<void> | void;
   onResponse?(context: FetchContext): Promise<void> | void;
 }
@@ -34,6 +35,15 @@ const $fetchRaw: $FetchRaw = async (_request, _options = {}) => {
   if (context.options?.onRequest) {
     await context.options?.onRequest(context);
   }
+
+  if (!context.options.signal && context.options.timeout) {
+    const abortController = new AbortController();
+
+    setTimeout(() => abortController.abort(), context.options.timeout);
+
+    context.options.signal = abortController.signal;
+  }
+
   context.response = await fetch(context.request, context.options);
 
   if (context.options?.onResponse) {

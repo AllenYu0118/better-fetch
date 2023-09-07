@@ -3,6 +3,8 @@
     <button @click="getData">getData</button>
 
     <p><button @click="getText">getText</button></p>
+
+    <p><button @click="fetchTimeout">fetchTimeout 5s</button></p>
   </div>
 </template>
 <script setup lang="ts">
@@ -28,6 +30,11 @@ const getData = async () => {
 const getText = async () => {
   const data = await $bfetch('/api/getText');
 
+  console.log(data);
+};
+
+const fetchTimeout = async () => {
+  const data = await $bfetch('https://bff.591.com.tw/home', { timeout: 5000 });
   console.log(data);
 };
 </script>
