@@ -5,6 +5,8 @@
     <p><button @click="getText">getText</button></p>
 
     <p><button @click="fetchTimeout">fetchTimeout 5s</button></p>
+
+    <p><button @click="autoRetry">autoRetry</button></p>
   </div>
 </template>
 <script setup lang="ts">
@@ -35,6 +37,13 @@ const getText = async () => {
 
 const fetchTimeout = async () => {
   const data = await $bfetch('https://bff.591.com.tw/home', { timeout: 5000 });
+  console.log(data);
+};
+
+const autoRetry = async () => {
+  const data = await $bfetch('https://google.com/404', {
+    retry: 5,
+  });
   console.log(data);
 };
 </script>

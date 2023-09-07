@@ -3,11 +3,12 @@ export interface $Fetch {
 }
 
 export type $FetchRaw = (
-  request: string | Request,
+  request: RequestInfo,
   options?: FetchOptions
 ) => Promise<FetchResponse>;
 
 interface FetchOptions extends RequestInit {
+  retry?: number | false;
   timeout?: number;
   onRequest?(context: FetchContext): Promise<void> | void;
   onResponse?(context: FetchContext): Promise<void> | void;
@@ -18,12 +19,13 @@ interface FetchResponse extends Response {
 }
 
 interface FetchContext {
-  request?: RequestInfo;
+  request: RequestInfo;
   options: FetchOptions;
   response?: FetchResponse;
+  error?: Error;
 }
 const context: FetchContext = {
-  request: undefined,
+  request: '',
   options: {},
   response: undefined,
 };
@@ -45,7 +47,13 @@ const $fetchRaw: $FetchRaw = async (_request, _options = {}) => {
     context.options.signal = abortController.signal;
   }
 
-  context.response = await fetch(context.request, context.options);
+  try {
+    context.response = await fetch(context.request, context.options);
+  } catch (error) {
+    context.error = error as Error;
+
+    return await onError(context);
+  }
 
   if (context.options?.onResponse) {
     await context.options?.onResponse(context);
@@ -79,4 +87,28 @@ export function createFetch(globalOptions: FetchOptions = {}) {
     return r._data;
   };
   return $fetch;
+}
+
+async function onError(context: FetchContext): Promise<FetchResponse> {
+  const isAbort =
+    (context.error?.name === 'AbortError' && !context.options.timeout) || false;
+
+  if (context.options.retry !== false && !isAbort) {
+    let retries;
+
+    if (typeof context.options.retry === 'number') {
+      retries = context.options.retry;
+    } else {
+      retries = 1;
+    }
+
+    if (retries > 0) {
+      return $fetchRaw(context.request, {
+        ...context.options,
+        retry: retries - 1,
+      });
+    }
+  }
+
+  throw context.error;
 }
