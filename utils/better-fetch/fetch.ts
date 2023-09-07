@@ -36,6 +36,7 @@ const $fetchRaw: $FetchRaw = async (_request, _options = {}) => {
     await context.options?.onRequest(context);
   }
 
+  // 超时取消请求
   if (!context.options.signal && context.options.timeout) {
     const abortController = new AbortController();
 
